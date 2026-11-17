@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kopfrechnen Klasse 8</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1d2433; --muted:#6b7280; --line:#e3ded3;
+    --accent:#1f6feb; --accent-soft:#e3edff; --done:#9aa3af; --warn:#d9480f; --ok:#2b8a3e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+  button,input,select{font:inherit}
+  .wrap{max-width:1200px;margin:0 auto;padding:18px 22px 40px}
+
+  /* Kopfzeile */
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+  h1{font-size:1.6rem;margin:0;font-weight:700;letter-spacing:.2px}
+  h1 small{font-weight:500;color:var(--muted);font-size:1.05rem;margin-left:6px}
+  .tabs{display:flex;background:#e9e5dc;border-radius:10px;padding:3px}
+  .tabs button{border:0;background:transparent;padding:7px 16px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600}
+  .tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .controls label{font-size:.95rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+  select,input[type=number]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input[type=number]{width:70px}
+  .btn{border:1px solid var(--line);background:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn:hover{border-color:#c9c2b3}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn:disabled{opacity:.45;cursor:default}
+
+  /* Timer */
+  .timerbar{display:flex;flex-wrap:wrap;align-items:center;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 20px;margin-bottom:18px}
+  .clock{font-variant-numeric:tabular-nums;font-size:3.4rem;font-weight:700;line-height:1;min-width:190px}
+  .clock.ending{color:var(--warn)}
+  .timer-btns{display:flex;gap:8px;flex-wrap:wrap}
+  .timer-btns .btn{padding:10px 18px;font-size:1.05rem}
+  .progress{flex:1 1 220px;min-width:200px}
+  .segs{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+  .seg{height:12px;border-radius:4px;background:#ece8df;overflow:hidden}
+  .seg i{display:block;height:100%;width:0;background:var(--accent)}
+  .seg.done i{width:100%;background:#b8c4d6}
+  .hint{font-size:.85rem;color:var(--muted);margin-top:6px}
+
+  /* Schüleransicht */
+  .topics{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(5,auto);gap:12px}
+  @media (max-width:760px){.topics{grid-template-columns:1fr;grid-auto-flow:row}}
+  .topic{display:flex;align-items:center;gap:16px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px 18px;transition:all .35s;position:relative;overflow:hidden}
+  .topic .nr{flex:0 0 52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;font-weight:700;background:#f0ece3}
+  .topic .name{font-size:1.45rem;font-weight:600;line-height:1.25}
+  .topic .bar{position:absolute;left:0;bottom:0;height:5px;width:0;background:var(--accent)}
+  .topic.active{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.025);box-shadow:0 6px 20px rgba(31,111,235,.18)}
+  .topic.active .nr{background:var(--accent);color:#fff}
+  .topic.done{opacity:.45}
+  .topic.done .nr{background:#e4e7eb;color:var(--done)}
+
+  /* Lehreransicht */
+  .current{background:var(--card);border:2px solid var(--accent);border-radius:14px;padding:18px 22px;margin-bottom:18px}
+  .current .lbl{font-size:.9rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+  .current .q{font-size:1.9rem;margin-top:6px;line-height:1.45}
+  .current .t{color:var(--muted);margin-top:4px}
+  .tbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .tbar h2{margin:0;font-size:1.2rem}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+  th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:#f0ece3;font-size:.9rem;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  td.nr{width:44px;font-weight:700;font-size:1.1rem;text-align:center}
+  td.topic-c{width:24%;color:var(--muted);font-size:.92rem}
+  td.task{font-size:1.2rem;line-height:1.5}
+  td.sol{width:18%;font-size:1.2rem;font-weight:700;color:var(--ok);cursor:pointer;user-select:none;white-space:nowrap}
+  td.sol .hid{color:transparent;background:#ece8df;border-radius:6px;padding:2px 10px;display:inline-block;min-width:80px}
+  td.sol .hid::after{content:"anzeigen";color:var(--muted);font-weight:500;font-size:.85rem}
+  td.sol .hid > *{display:none}
+  tr.now{background:var(--accent-soft)}
+  tr.now td.nr{color:var(--accent)}
+  tr.past td{opacity:.75}
+
+  /* Mathe */
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em;line-height:1.05}
+  .frac>span:first-child{border-bottom:2px solid currentColor;padding:0 .2em}
+  .frac>span:last-child{padding:0 .2em}
+  .m{white-space:nowrap}
+
+  /* Ende-Overlay */
+  .overlay{position:fixed;inset:0;background:rgba(29,36,51,.55);display:none;place-items:center;z-index:50}
+  .overlay.show{display:grid}
+  .overlay .box{background:#fff;border-radius:20px;padding:40px 60px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pop .4s ease}
+  .overlay .box h2{font-size:3rem;margin:0 0 10px;color:var(--warn)}
+  .overlay .box p{font-size:1.2rem;color:var(--muted);margin:0 0 20px}
+  @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+  body.flash{animation:flash .5s ease 4}
+  @keyframes flash{50%{background:#ffe3d3}}
+  .hidden{display:none !important}
+  footer{margin-top:24px;font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Kopfrechnen <small id="subtitle">Klasse 8 · Woche 1</small></h1>
+    <div class="controls">
+      <label>Woche
+        <select id="week"></select>
+      </label>
+      <div class="tabs" role="tablist">
+        <button id="tabS" class="on">Schüleransicht</button>
+        <button id="tabL">Lehreransicht</button>
+      </div>
+      <button class="btn" id="fs" title="Vollbild">⛶ Vollbild</button>
+    </div>
+  </header>
+
+  <section class="timerbar">
+    <div class="clock" id="clock">10:00</div>
+    <div class="timer-btns">
+      <button class="btn primary" id="start">▶ Start</button>
+      <button class="btn" id="reset">↺ Zurücksetzen</button>
+    </div>
+    <label class="controls" style="color:var(--muted)">Zeit
+      <input type="number" id="minutes" min="1" max="90" step="1" value="10"> min
+    </label>
+    <div class="progress">
+      <div class="segs" id="segs"></div>
+      <div class="hint" id="hint">Pro Thema: 1:00 min</div>
+    </div>
+  </section>
+
+  <!-- Schüleransicht -->
+  <section id="viewS">
+    <div class="topics" id="topics"></div>
+  </section>
+
+  <!-- Lehreransicht -->
+  <section id="viewL" class="hidden">
+    <div class="current" id="current">
+      <div class="lbl" id="curLbl">Noch nicht gestartet</div>
+      <div class="q" id="curQ">Starte den Timer – die aktuelle Aufgabe erscheint dann hier zum Vorlesen.</div>
+      <div class="t" id="curT"></div>
+    </div>
+    <div class="tbar">
+      <h2 id="tblTitle">Aufgaben Woche 1</h2>
+      <button class="btn primary" id="reveal">Alle Lösungen einblenden</button>
+    </div>
+    <table>
+      <thead><tr><th>Nr.</th><th>Thema</th><th>Aufgabe</th><th>Lösung</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </section>
+
+  <footer>Aufgaben: „Kopfrechnen Klasse 8, Wochen 01–40“ (A. Stahl, Siemens-Oberschule); Thema 5 in den Wochen 1–20 ersetzt durch lineare Gleichungen. Leertaste: Start/Pause.</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="box">
+    <h2>Zeit ist um!</h2>
+    <p>Stifte weg – jetzt werden die Lösungen verglichen.</p>
+    <button class="btn primary" id="closeOv">OK</button>
+  </div>
+</div>
+
+<script>
+/* ---------- Daten ---------- */
+const TOPICS_A = [
+  "Multiplikation zweistelliger Zahlen (Distributivgesetz)",
+  "Anwendungsaufgaben Prozentrechnung",
+  "Innenwinkelsumme in Vielecken",
+  "Division von Dezimalbrüchen",
+  "Lineare Gleichungen",
+  "Fläche und Umfang von Rechtecken",
+  "Addition und Subtraktion ganzer Zahlen",
+  "Bruchrechnung (Grundrechenarten)",
+  "Multiplikation positiver und negativer Dezimalbrüche",
+  "Prozentrechnung (große und kleine Prozentsätze)"
+];
+const TOPIC_SETS = [
+  TOPICS_A,
+  TOPICS_A.map((t,i)=> i===9 ? "Prozentrechnung" : t),
+  [
+    "Ergänzen zu 1000",
+    "Multiplikation zweistelliger Zahlen",
+    "Augensumme von Würfeln",
+    "Summe aufeinanderfolgender Zahlen",
+    "Große Zahlen",
+    "Fläche und Umfang von Rechtecken",
+    "Addition und Subtraktion ganzer Zahlen",
+    "Bruchrechnung (Grundrechenarten)",
+    "Multiplikation positiver und negativer Dezimalbrüche",
+    "Prozentrechnung (große und kleine Prozentsätze)"
+  ],
+  [
+    "Addition und Subtraktion von Brüchen",
+    "Prozentrechnung",
+    "ggT und kgV",
+    "Innenwinkelsumme bei ebenen Figuren",
+    "Runden",
+    "Potenzen",
+    "Kontostände",
+    "Proportionale und antiproportionale Zuordnungen",
+    "Lineare Gleichungen",
+    "Kopfgeometrie"
+  ]
+];
+const topicsFor = w => TOPIC_SETS[Math.floor(w/10)];
+
+const f = (a,b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+const m = s => `<span class="m">${s}</span>`;
+const vx = s => s.replace(/x/g,'<i>x</i>');
+/* Gleichungen schreiben als "linke = rechte → Lösung" */
+const EQ = s => { const [g,l]=s.split("→"); return ["Löse die Gleichung "+m(vx(g.trim())), m("<i>x</i> = "+l.trim())]; };
+
+/* Thema 5 (Wochen 1–20): lineare Gleichungen, steigend im Anspruch */
+const LGS = [
+  "2x + 5 = 25 → 10",
+  "3x − 4 = 11 → 5",
+  "4x + 7 = 31 → 6",
+  "5x − 8 = 27 → 7",
+  "6x + 12 = 0 → −2",
+  "7x − 9 = 40 → 7",
+  "3x + 4x = 35 → 5",
+  "5x + 3 + 2x = 31 → 4",
+  "8x − 3x + 6 = 41 → 7",
+  "4x + 9 = x + 21 → 4",
+  "6x − 5 = 2x + 15 → 5",
+  "9x + 4 = 4x − 16 → −4",
+  "2x + 3x + 7 = 3x + 19 → 6",
+  "25 − 3x = 4 → 7",
+  "7x − 12 = 3x + 8 → 5",
+  "10x − 4 − 3x = 2x + 31 → 7",
+  "12 + 5x = 8x − 9 → 7",
+  "3x + 2 + x = 6x − 8 → 5",
+  "8x − 7 = 5x − 22 → −5",
+  "6x + 9 − 2x = 3 + x − 9 → −5"
+].map(EQ);
+
+/* Aufgaben 1–4, 6, 7 der Wochen 1–10 (wiederholen sich in 11–20) */
+const BASE = [
+  [["Berechne "+m("98 · 17"), "1666"],
+   ["Ein Paket Butter kostet 1,20 €. Der Preis wird um 5 % erhöht. Was kostet die Butter nun?", "1,26 €"],
+   ["In einem Dreieck gilt "+m("α = 35°")+" und "+m("β = 98°")+". Wie groß ist γ?", m("γ = 47°")],
+   ["Berechne "+m("1,02 : 0,002"), "510"],
+   ["Ein Rechteck hat die Seitenlängen a = 4 cm und b = 5 cm. Berechne den Umfang.", "18 cm"],
+   ["Berechne "+m("−125 + 36"), "−89"]],
+  [["Berechne "+m("97 · 23"), "2231"],
+   ["Eine Tafel Schokolade kostet 1,10 €. Der Preis wird um 10 % gesenkt. Was kostet die Schokolade nun?", "0,99 €"],
+   ["In einem Dreieck gilt "+m("α = 55°")+" und "+m("β = 102°")+". Wie groß ist γ?", m("γ = 23°")],
+   ["Berechne "+m("3,5 : 0,07"), "50"],
+   ["Ein Rechteck hat die Seitenlängen a = 4 cm und b = 5 cm. Berechne den Flächeninhalt.", "20 cm²"],
+   ["Berechne "+m("1045 − 1046"), "−1"]],
+  [["Berechne "+m("98 · 17"), "1666"],
+   ["Eine Waschmaschine kostet 500 €. Der Preis wird um 3 % erhöht. Was kostet die Waschmaschine nun?", "515 €"],
+   ["In einem Viereck gilt "+m("α = 35°")+", "+m("β = 98°")+" und "+m("δ = 25°")+". Wie groß ist γ?", m("γ = 202°")],
+   ["Berechne "+m("350 : 0,07"), "5000"],
+   ["Ein Quadrat hat die Seitenlänge a = 4 cm. Berechne den Umfang.", "16 cm"],
+   ["Berechne "+m("−165 − 56"), "−221"]],
+  [["Berechne "+m("99 · 37"), "3663"],
+   ["Ein Fernseher kostet 300 €. Der Preis wird um 4 % erhöht. Was kostet der Fernseher nun?", "312 €"],
+   ["In einem Viereck gilt "+m("α = 105°")+", "+m("β = 102°")+" und "+m("δ = 25°")+". Wie groß ist γ?", m("γ = 128°")],
+   ["Berechne "+m("0,008 : 0,002"), "4"],
+   ["Ein Rechteck hat die Seitenlänge a = 4 cm und den Flächeninhalt A = 24 cm². Berechne die zweite Seitenlänge.", "6 cm"],
+   ["Berechne "+m("196 − 205"), "−9"]],
+  [["Berechne "+m("98 · 42"), "4116"],
+   ["Ein DVD-Player kostet 60 €. Der Preis wird um 25 % gesenkt. Was kostet das Gerät nun?", "45 €"],
+   ["In einem Dreieck gilt "+m("α = 67°")+", "+m("β = 103°")+". Wie groß ist γ?", m("γ = 10°")],
+   ["Berechne "+m("48 : 80"), "0,6"],
+   ["Ein Quadrat hat den Flächeninhalt A = 64 cm². Berechne die Seitenlänge.", "8 cm"],
+   ["Berechne "+m("−345 − 56"), "−401"]],
+  [["Berechne "+m("98 · 19"), "1862"],
+   ["Eine Waschmaschine kostet 600 €. Der Preis wird um 3 % erhöht. Was kostet die Waschmaschine nun?", "618 €"],
+   ["In einem Viereck gilt "+m("α = 35°")+", "+m("β = 98°")+" und "+m("δ = 25°")+". Wie groß ist γ?", m("γ = 202°")],
+   ["Berechne "+m("350 : 0,07"), "5000"],
+   ["Ein Quadrat hat die Seitenlänge a = 9 cm. Berechne den Umfang.", "36 cm"],
+   ["Berechne "+m("−165 − 56"), "−221"]],
+  [["Berechne "+m("96 · 16"), "1536"],
+   ["Du hast ein Guthaben auf der Bank von 200 € und bekommst nach einem Jahr 2,3 % Zinsen. Wie groß ist dein Guthaben jetzt?", "204,60 €"],
+   ["In einem Fünfeck gilt "+m("α = γ = 60°")+", "+m("β = 90°")+" und "+m("δ = 170°")+". Wie groß ist ε?", m("ε = 160°")],
+   ["Berechne "+m("5,4 : 0,006"), "900"],
+   ["Ein Rechteck hat eine Seitenlänge von 5 cm, die andere Seitenlänge ist um 1 cm größer. Berechne den Umfang.", "22 cm"],
+   ["Berechne "+m("−673 + 56"), "−617"]],
+  [["Berechne "+m("98 · 28"), "2744"],
+   ["Du hast ein Guthaben auf der Bank von 200 €, das sich nach einem Jahr auf 210 € erhöht hat. Wie groß war der Zinssatz?", "5 %"],
+   ["In einem Fünfeck gilt "+m("α = γ = 75°")+", "+m("β = 80°")+" und "+m("δ = 160°")+". Wie groß ist ε?", m("ε = 150°")],
+   ["Berechne "+m("0,63 : 0,09"), "7"],
+   ["Ein Rechteck hat eine Seitenlänge von 5 cm, die Fläche beträgt 20 cm². Berechne den Umfang.", "18 cm"],
+   ["Berechne "+m("1025 − 2026"), "−1001"]],
+  [["Berechne "+m("96 · 21"), "2016"],
+   ["Du hast ein Guthaben auf der Bank von 500 €, das sich nach einem Jahr auf 520 € erhöht hat. Wie groß war der Zinssatz?", "4 %"],
+   ["In einem gleichschenkligen Dreieck gilt "+m("β = γ = 45°")+". Wie groß ist α?", m("α = 90°")],
+   ["Berechne "+m("180 : 0,009"), "20 000"],
+   ["Ein Rechteck hat eine Seitenlänge von 9 cm, die Fläche beträgt 72 cm². Berechne den Umfang.", "34 cm"],
+   ["Berechne "+m("−1065 − 2100"), "−3165"]],
+  [["Berechne "+m("97 · 31"), "3007"],
+   ["Du hast ein Guthaben von 3000 € auf der Bank, das sich nach einem Jahr auf 3090 € erhöht hat. Wie groß war der Zinssatz?", "3 %"],
+   ["In einem Viereck gilt "+m("α = γ = 75°")+", "+m("β = 80°")+". Wie groß ist δ?", m("δ = 130°")],
+   ["Berechne "+m("0,96 : 0,04"), "24"],
+   ["Ein Rechteck hat eine Seitenlänge von 5 cm, der Umfang beträgt 26 cm. Berechne den Flächeninhalt.", "40 cm²"],
+   ["Berechne "+m("−89 − 125"), "−214"]]
+];
+
+/* Aufgaben 8–10 der Wochen 1–10 (kehren in 21–30 wieder) */
+const TAIL_A = [
+  [["Berechne "+m(f(2,5)+" + "+f(3,4)), f(23,20)], ["Berechne "+m("0,15 · (−0,3)"), "−0,045"], ["Berechne 1,3 % von 130", "1,69"]],
+  [["Berechne "+m(f(2,7)+" − "+f(1,3)), m("−"+f(1,21))], ["Berechne "+m("0,6 · (−0,03)"), "−0,018"], ["Berechne 0,14 % von 14", "0,0196"]],
+  [["Berechne "+m(f(2,5)+" · "+f(3,4)), f(3,10)], ["Berechne "+m("−0,34 · (−0,3)"), "0,102"], ["Berechne 170 % von 17", "28,9"]],
+  [["Berechne "+m(f(2,5)+" : "+f(4,5)), f(1,2)], ["Berechne "+m("−20 · (−0,15)"), "3"], ["Berechne 0,18 % von 180", "0,324"]],
+  [["Berechne "+m(f(2,3)+" − "+f(3,5)), f(1,15)], ["Berechne "+m("0,05 · (−0,2)"), "−0,01"], ["Berechne 16 % von 16 000", "2560"]],
+  [["Berechne "+m(f(2,5)+" · "+f(3,4)), f(3,10)], ["Berechne "+m("−0,34 · (−0,3)"), "0,102"], ["Berechne 170 % von 17", "28,9"]],
+  [["Berechne "+m(f(2,7)+" : "+f(4,21)), f(3,2)], ["Berechne "+m("4,4 · (−0,6)"), "−2,64"], ["Berechne 1,5 % von 15 000", "225"]],
+  [["Berechne "+m(f(2,7)+" + "+f(4,3)), f(34,21)], ["Berechne "+m("−3,2 · (−0,05)"), "0,16"], ["Berechne 0,014 % von 1400", "0,196"]],
+  [["Berechne "+m("−"+f(3,7)+" + "+f(5,7)), f(2,7)], ["Berechne "+m("−6,4 · 0,08"), "−0,512"], ["Berechne 130 % von 1,3", "1,69"]],
+  [["Berechne "+m(f(5,8)+" · "+f(4,15)), f(1,6)], ["Berechne "+m("−6,4 : (−0,08)"), "80"], ["Berechne 1,9 % von 19 000", "361"]]
+];
+
+/* Aufgaben 8–10 der Wochen 11–20 */
+const TAIL_B = [
+  [["Berechne "+m(f(1,5)+" + "+f(3,4)), f(19,20)], ["Berechne "+m("−0,9 · 0,3"), "−0,27"], ["Berechne 8 % von 800", "64"]],
+  [["Berechne "+m(f(2,7)+" − "+f(1,4)), f(1,28)], ["Berechne "+m("−0,2 · 0,3"), "−0,06"], ["Berechne 4 % von 250", "10"]],
+  [["Berechne "+m(f(2,5)+" · "+f(7,4)), f(7,10)], ["Berechne "+m("−0,25 · 0,3"), "−0,075"], ["Berechne 15 % von 3000", "450"]],
+  [["Berechne "+m(f(3,5)+" : "+f(4,5)), f(3,4)], ["Berechne "+m("−20 · (−0,1)"), "2"], ["Berechne 40 % von 150", "60"]],
+  [["Berechne "+m(f(1,3)+" − "+f(3,5)), m("−"+f(4,15))], ["Berechne "+m("0,15 · (−0,2)"), "−0,03"], ["Berechne 30 % von 11", "3,3"]],
+  [["Berechne "+m(f(2,5)+" · "+f(3,8)), f(3,20)], ["Berechne "+m("−0,33 · (−0,3)"), "0,099"], ["Berechne 25 % von 8", "2"]],
+  [["Berechne "+m(f(1,7)+" : "+f(4,21)), f(3,4)], ["Berechne "+m("0,4 · (−0,6)"), "−0,24"], ["Berechne 0,5 % von 15 000", "75"]],
+  [["Berechne "+m(f(1,7)+" + "+f(4,3)), f(31,21)], ["Berechne "+m("−1,2 · (−0,5)"), "0,6"], ["Berechne 35 % von 300", "105"]],
+  [["Berechne "+m("−"+f(3,7)+" + "+f(6,7)), f(3,7)], ["Berechne "+m("−0,4 · 0,08"), "−0,032"], ["Berechne 150 % von 20", "30"]],
+  [["Berechne "+m(f(5,8)+" · "+f(2,15)), f(1,12)], ["Berechne "+m("−1,5 · (−0,5)"), "0,75"], ["Berechne 300 % von 4000", "12 000"]]
+];
+
+/* Aufgaben 1–7 der Wochen 21–30 */
+const C21 = [
+  [["375 plus wie viel ergibt 1000?", "625"], ["Berechne "+m("15 · 50"), "750"],
+   ["Auf wie viele verschiedene Arten lässt sich mit zwei unterschiedlich gefärbten Würfeln die Augensumme 10 werfen?", "3"],
+   ["Die Summe dreier aufeinanderfolgender Zahlen ist 15. Wie lautet die kleinste der drei Zahlen?", "4"],
+   ["Wie viele Nullen hat eine Milliarde?", "9"],
+   ["Ein Rechteck hat die Seitenlängen a = 12 cm und b = 25 cm. Berechne den Umfang.", "74 cm"],
+   ["Berechne "+m("−333 + 66"), "−267"]],
+  [["681 plus wie viel ergibt 1000?", "319"], ["Berechne "+m("12 · 35"), "420"],
+   ["Auf wie viele verschiedene Arten lässt sich mit zwei unterschiedlich gefärbten Würfeln die Augensumme 9 werfen?", "4"],
+   ["Die Summe dreier aufeinanderfolgender Zahlen ist 60. Wie lautet die kleinste der drei Zahlen?", "19"],
+   ["Wie viele Nullen haben hundert Milliarden?", "11"],
+   ["Ein Rechteck hat die Seitenlängen a = 40 cm und b = 25 cm. Berechne den Flächeninhalt.", "1000 cm²"],
+   ["Berechne "+m("−555 + 88"), "−467"]],
+  [["111 plus wie viel ergibt 1000?", "889"], ["Berechne "+m("11 · 26"), "286"],
+   ["Auf wie viele verschiedene Arten lässt sich mit zwei unterschiedlich gefärbten Würfeln die Augensumme 7 werfen?", "6"],
+   ["Die Summe dreier aufeinanderfolgender gerader Zahlen ist 60. Wie lautet die kleinste der drei Zahlen?", "18"],
+   ["Wie viele Nullen haben zehn Billionen?", "13"],
+   ["Ein Quadrat hat die Seitenlänge a = 19 cm. Berechne den Umfang.", "76 cm"],
+   ["Berechne "+m("−444 + 99"), "−345"]],
+  [["555 plus wie viel ergibt 1000?", "445"], ["Berechne "+m("12 · 22"), "264"],
+   ["Auf wie viele verschiedene Arten lässt sich mit drei unterschiedlich gefärbten Würfeln die Augensumme 4 werfen?", "3"],
+   ["Die Summe dreier aufeinanderfolgender ungerader Zahlen ist 60. Wie lautet die kleinste der drei Zahlen?", "nicht möglich"],
+   ["Wie viele Nullen haben drei Billiarden?", "15"],
+   ["Ein Rechteck hat die Seitenlänge a = 14 cm und den Flächeninhalt A = 84 cm². Berechne die zweite Seitenlänge.", "6 cm"],
+   ["Berechne "+m("−777 + 88"), "−689"]],
+  [["345 plus wie viel ergibt 1000?", "655"], ["Berechne "+m("19 · 30"), "570"],
+   ["Auf wie viele verschiedene Arten lässt sich mit drei unterschiedlich gefärbten Würfeln die Augensumme 5 werfen?", "6"],
+   ["Die Summe von vier aufeinanderfolgenden Zahlen ist 14. Wie lautet die kleinste der vier Zahlen?", "2"],
+   ["Wie viele Nullen haben zwölf Millionen und dreihundertfünfzig?", "4"],
+   ["Ein Quadrat hat den Flächeninhalt A = 169 cm². Berechne die Seitenlänge.", "13 cm"],
+   ["Berechne "+m("−444 + 66"), "−378"]],
+  [["987 plus wie viel ergibt 1000?", "13"], ["Berechne "+m("19 · 40"), "760"],
+   ["Auf wie viele verschiedene Arten lässt sich mit drei unterschiedlich gefärbten Würfeln die Augensumme 18 werfen?", "1"],
+   ["Die Summe von vier aufeinanderfolgenden Zahlen ist 34. Wie lautet die kleinste der vier Zahlen?", "7"],
+   ["Wie viele Nullen haben zwanzig Millionen und achthunderttausend?", "6"],
+   ["Ein Quadrat hat die Seitenlänge a = 34 cm. Berechne den Umfang.", "136 cm"],
+   ["Berechne "+m("−222 + 77"), "−145"]],
+  [["43 plus wie viel ergibt 1000?", "957"], ["Berechne "+m("29 · 20"), "580"],
+   ["Auf wie viele verschiedene Arten lässt sich mit drei unterschiedlich gefärbten Würfeln die Augensumme 16 werfen?", "6"],
+   ["Die Summe von vier aufeinanderfolgenden geraden Zahlen ist 28. Wie lautet die kleinste der vier Zahlen?", "4"],
+   ["Wie viele Nullen hat die Zahl Elftausendelfhundertundelf?", "keine (12 111)"],
+   ["Ein Rechteck hat eine Seitenlänge von 15 cm, die andere Seitenlänge ist um 1 cm größer. Berechne den Umfang.", "62 cm"],
+   ["Berechne "+m("−555 + 66"), "−489"]],
+  [["391 plus wie viel ergibt 1000?", "609"], ["Berechne "+m("14 · 25"), "350"],
+   ["Auf wie viele verschiedene Arten lässt sich mit drei unterschiedlich gefärbten Würfeln die Augensumme 17 werfen?", "3"],
+   ["Die Summe dreier aufeinanderfolgender Zahlen ist 24. Wie lautet die kleinste der drei Zahlen?", "7"],
+   ["Wie viele Einsen hat die Zahl Elftausendelfhundertundelf?", "4 (12 111)"],
+   ["Ein Rechteck hat eine Seitenlänge von 35 cm, die Fläche beträgt 1400 cm². Berechne den Umfang.", "150 cm"],
+   ["Berechne "+m("−444 + 88"), "−356"]],
+  [["753 plus wie viel ergibt 1000?", "247"], ["Berechne "+m("18 · 12"), "216"],
+   ["Auf wie viele verschiedene Arten lässt sich mit vier unterschiedlich gefärbten Würfeln die Augensumme 5 werfen?", "4"],
+   ["Die Summe dreier aufeinanderfolgender Zahlen ist 300. Wie lautet die kleinste der drei Zahlen?", "99"],
+   ["Wie viele Nullen hat die Zahl acht Millionen achthunderttausendundacht?", "4 (8 800 008)"],
+   ["Ein Rechteck hat eine Seitenlänge von 19 cm, die Fläche beträgt 152 cm². Berechne den Umfang.", "54 cm"],
+   ["Berechne "+m("−222 + 88"), "−134"]],
+  [["667 plus wie viel ergibt 1000?", "333"], ["Berechne "+m("16 · 21"), "336"],
+   ["Auf wie viele verschiedene Arten lässt sich mit zehn unterschiedlich gefärbten Würfeln die Augensumme 11 werfen?", "10"],
+   ["Die Summe von vier aufeinanderfolgenden Zahlen ist 78. Wie lautet die kleinste der vier Zahlen?", "18"],
+   ["Wie viele Nullen hat eine Trilliarde?", "21"],
+   ["Eine der Seiten eines Rechtecks ist 15 cm lang, der Umfang beträgt 46 cm. Berechne den Flächeninhalt.", "120 cm²"],
+   ["Berechne "+m("−666 + 88"), "−578"]]
+];
+
+/* Wochen 31–40 */
+const W31 = [
+  [["Berechne "+m(f(1,3)+" + "+f(1,4)), f(7,12)], ["20 % von 850 € sind …?", "170 €"], ["Größter gemeinsamer Teiler von 72 und 96?", "24"],
+   ["In einem Dreieck gilt "+m("α = 75°")+" und "+m("β = 85°")+". Wie groß ist γ?", m("γ = 20°")], ["Runde 435 827 auf Hunderter.", "435 800"],
+   ["Berechne "+m("5<sup>4</sup>"), "625"], ["Guthaben 380 €. Es werden 500 € abgehoben und dann 200 € eingezahlt. Wie ist der neue Kontostand?", "80 € Guthaben"],
+   ["30 Ziegelsteine wiegen 70 kg. Wie viel wiegen 45 Ziegelsteine?", "105 kg"], EQ("3x + 7 = 40 → 11"),
+   ["Wie viele Schnittpunkte können 4 Geraden höchstens haben?", "6"]],
+  [["Berechne "+m(f(1,5)+" + "+f(1,3)), f(8,15)], ["28 m sind wie viel % von 70 m?", "40 %"], ["Kleinstes gemeinsames Vielfaches von 28 und 35?", "140"],
+   ["In einem Viereck ist "+m("α = β = γ = 75°")+". Wie groß ist δ?", m("δ = 135°")], ["Runde 288 888 auf Tausender.", "289 000"],
+   ["Berechne "+m("2<sup>6</sup>"), "64"], ["Guthaben 520 €. Es werden 750 € abgehoben und dann 200 € eingezahlt. Wie ist der neue Kontostand?", "30 € Schulden"],
+   ["800 m² Bauland kosten 160 000 €. Was kosten 900 m² Bauland?", "180 000 €"], EQ("6x − 13 = 41 → 9"),
+   ["Wie viele Höhen eines Dreiecks können höchstens außerhalb des Dreiecks liegen?", "zwei"]],
+  [["Berechne "+m(f(1,8)+" + "+f(1,7)), f(15,56)], ["30 % von 250 kg sind …?", "75 kg"], ["Größter gemeinsamer Teiler von 48 und 28?", "4"],
+   ["In einem Dreieck ist α doppelt so groß wie die beiden anderen Winkel zusammen. Wie groß ist α?", m("α = 120°")], ["Runde 990 099 auf Zehner.", "990 100"],
+   ["Berechne "+m("3<sup>5</sup>"), "243"], ["Guthaben 210 €. Es werden 300 € abgehoben und dann 250 € eingezahlt. Wie ist der neue Kontostand?", "160 € Guthaben"],
+   ["5 Gummibärchen wiegen 12 g. Wie viel wiegen 6 Gummibärchen?", "14,4 g"], EQ("8x + 23 = 87 → 8"),
+   ["Wie viele Winkelhalbierende eines Dreiecks können höchstens außerhalb des Dreiecks liegen?", "keine"]],
+  [["Berechne "+m(f(1,2)+" + "+f(9,10)), f(7,5)], ["33 $ sind wie viel % von 50 $?", "66 %"], ["Kleinstes gemeinsames Vielfaches von 18 und 27?", "54"],
+   ["In einem Viereck ist δ dreimal so groß wie die drei anderen Winkel zusammen. Wie groß ist δ?", m("δ = 270°")], ["Runde 454 545 auf Zehntausender.", "450 000"],
+   ["Berechne "+m("7<sup>3</sup>"), "343"], ["900 € Schulden. Es werden 780 € eingezahlt und dann 200 € abgehoben. Wie ist der neue Kontostand?", "320 € Schulden"],
+   ["2000 Liter Heizöl kosten 900 €. Was kosten 1500 Liter Heizöl?", "675 €"], EQ("5x + 26 = 21 → −1"),
+   ["Wie viele gleichseitige Dreiecke der Seitenlänge 1 braucht man, um ein gleichseitiges Dreieck der Seitenlänge 2 vollständig auszufüllen?", "vier"]],
+  [["Berechne "+m(f(5,8)+" − "+f(1,4)), f(3,8)], ["70 % von 300 m sind …?", "210 m"], ["Größter gemeinsamer Teiler von 135 und 36?", "9"],
+   ["Wie groß ist die Innenwinkelsumme im Sechseck?", "720°"], ["Runde 909 090 auf Zehntausender.", "910 000"],
+   ["Berechne "+m("9<sup>3</sup>"), "729"], ["130 € Schulden. Es werden 500 € eingezahlt und dann 120 € abgehoben. Wie ist der neue Kontostand?", "250 € Guthaben"],
+   ["In 100 ml Orangensaft sind 2,3 mg Vitamin C. Wie viel mg Vitamin C sind in einer 0,7-Liter-Flasche?", "16,1 mg"], EQ("26 − 3x = 14 → 4"),
+   ["Wie viele Schnittpunkte können drei Kreise höchstens haben?", "sechs"]],
+  [["Berechne "+m(f(8,9)+" − "+f(2,3)), f(2,9)], ["36 cm sind wie viel % von 90 cm?", "40 %"], ["Kleinstes gemeinsames Vielfaches von 26 und 65?", "130"],
+   ["In einem Dreieck ist β doppelt so groß wie α und γ dreimal so groß wie α. Wie groß ist α?", m("α = 30°")], ["Runde 989 898 auf Tausender.", "990 000"],
+   ["Berechne "+m("2<sup>8</sup>"), "256"], ["555 € Schulden. Es werden 777 € eingezahlt und dann 222 € abgehoben. Wie ist der neue Kontostand?", "0 €"],
+   ["Für 5 kg Brot benötigt man 4000 g Mehl. Wie viel Mehl braucht man für 3 kg Brot?", "2400 g"], EQ("40 − 5x = 25 → 3"),
+   ["Wie viele gleichseitige Dreiecke der Seitenlänge 1 braucht man, um ein gleichseitiges Dreieck der Seitenlänge 3 vollständig auszufüllen?", "neun"]],
+  [["Berechne "+m(f(3,4)+" + "+f(1,8)), f(7,8)], ["120 % von 350 $ sind …?", "420 $"], ["Größter gemeinsamer Teiler von 120 und 96?", "24"],
+   ["In einem Parallelogramm ist α doppelt so groß wie β. Wie groß ist δ?", m("δ = 60°")], ["Runde 717 717 auf Tausender.", "718 000"],
+   ["Berechne "+m("11<sup>3</sup>"), "1331"], ["8000 € Guthaben. Es werden 500 € eingezahlt und dann 12 000 € abgehoben. Wie ist der neue Kontostand?", "3500 € Schulden"],
+   ["Für 200 € bekommt man 260 $. Wie viel $ erhält man für 500 €?", "650 $"], EQ("55 = 33 − 2x → −11"),
+   ["In wie viele Stücke kann man einen Kreis mit drei geraden Schnitten höchstens teilen?", "7"]],
+  [["Berechne "+m(f(3,4)+" − "+f(1,8)), f(5,8)], ["15 kg sind wie viel % von 3000 kg?", "0,5 %"], ["Kleinstes gemeinsames Vielfaches von 30 und 42?", "210"],
+   ["In einem Parallelogramm ist α dreimal so groß wie β. Wie groß ist γ?", m("γ = 135°")], ["Runde 123 456 auf Hunderter.", "123 500"],
+   ["Berechne "+m("3<sup>6</sup>"), "729"], ["1000 € Schulden. Es werden 230 € eingezahlt und dann noch mal 820 € eingezahlt. Wie ist der neue Kontostand?", "50 € Guthaben"],
+   ["Der Heuvorrat eines Bauern reicht bei 12 Kühen für 3 Monate. Wie lange reicht der Vorrat bei 9 Kühen?", "4 Monate"], EQ("13 + x = 8 + 2x → 5"),
+   ["Ein Würfel steht auf einer seiner Kanten und wird senkrecht von oben beleuchtet. Welche Form hat sein Schatten auf dem Boden?", "rechteckig"]],
+  [["Berechne "+m(f(1,100)+" + "+f(1,50)), f(3,100)], ["35 % von 300 € sind …?", "105 €"], ["Größter gemeinsamer Teiler von 56 und 84?", "28"],
+   ["In einem Parallelogramm ist α viermal so groß wie β. Wie groß ist γ?", m("γ = 144°")], ["Runde 199 199 auf Zehntausender.", "200 000"],
+   ["Berechne "+m("5<sup>5</sup>"), "3125"], ["999 € Schulden. Es werden 111 € abgehoben und dann 1000 € eingezahlt. Wie ist der neue Kontostand?", "110 € Schulden"],
+   ["Ein Strauß mit 5 Nelken kostet 1,95 €. Wie viel kostet ein Strauß mit 7 Nelken?", "2,73 €"], EQ("9x − 12 = −39 → −3"),
+   ["Wie viele rechte Winkel können vier Geraden höchstens bilden?", "16"]],
+  [["Berechne "+m(f(1,3)+" − "+f(1,4)), f(1,12)], ["480 € sind wie viel % von 200 €?", "240 %"], ["Kleinstes gemeinsames Vielfaches von 14 und 16?", "112"],
+   ["In einem Parallelogramm ist β fünfmal so groß wie α. Wie groß ist γ?", m("γ = 30°")], ["Runde 987 654 auf Hunderter.", "987 700"],
+   ["Berechne "+m("7<sup>4</sup>"), "2401"], ["555 € Guthaben. Es werden 555 € eingezahlt und dann 200 € abgehoben. Wie ist der neue Kontostand?", "910 € Guthaben"],
+   ["Vier Mähdrescher benötigen für ein 12 ha großes Feld 9 Stunden. Wie lange brauchen sie für ein 16 ha großes Feld?", "12 Stunden"], EQ("15x + 50 = −25 → −5"),
+   ["Ein großes Quadrat ist aus 9 kleinen Quadraten zusammengesetzt. Wie viele Seiten der kleinen Quadrate liegen innen?", "24"]]
+];
+
+const WEEKS = [];
+const mk = (b, eqn, tail) => [b[0],b[1],b[2],b[3],eqn,b[4],b[5],tail[0],tail[1],tail[2]];
+for(let i=0;i<10;i++) WEEKS.push(mk(BASE[i], LGS[i], TAIL_A[i]));
+for(let i=0;i<10;i++) WEEKS.push(mk(BASE[i], LGS[10+i], TAIL_B[i]));
+for(let i=0;i<10;i++) WEEKS.push([...C21[i], ...TAIL_A[i]]);
+for(let i=0;i<10;i++) WEEKS.push(W31[i]);
+
+/* ---------- Zustand ---------- */
+const S = { week:0, minutes:10, running:false, startedAt:0, elapsed:0, finished:false, view:"S", revealed:new Set(), allRevealed:false };
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try{ return localStorage.getItem(k) }catch(e){ return null } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch(e){} }
+};
+(function load(){
+  const w = parseInt(store.get("kr8-week")); if(w>=0 && w<WEEKS.length) S.week=w;
+  const mi = parseFloat(store.get("kr8-min")); if(mi>0) S.minutes=mi;
+  if(location.hash==="#lehrer") S.view="L";
+})();
+
+/* ---------- Aufbau ---------- */
+for(let g=0; g<WEEKS.length/10; g++){ const og=document.createElement("optgroup"); og.label=`Wochen ${g*10+1}–${g*10+10}`; for(let i=g*10;i<g*10+10;i++){ const o=document.createElement("option"); o.value=i; o.textContent="Woche "+(i+1); og.appendChild(o);} $("week").appendChild(og); }
+for(let i=0;i<10;i++){ const s=document.createElement("div"); s.className="seg"; s.innerHTML="<i></i>"; $("segs").appendChild(s); }
+function renderTopics(){ $("topics").innerHTML = topicsFor(S.week).map((t,i)=>`<div class="topic" data-i="${i}"><div class="nr">${i+1}</div><div class="name">${t}</div><div class="bar"></div></div>`).join(""); }
+
+function renderWeek(){
+  $("week").value = S.week;
+  $("subtitle").textContent = `Klasse 8 · Woche ${S.week+1}`;
+  $("tblTitle").textContent = `Aufgaben Woche ${S.week+1}`;
+  renderTopics();
+  const W = WEEKS[S.week], TOPICS = topicsFor(S.week);
+  $("tbody").innerHTML = W.map((t,i)=>`<tr data-i="${i}"><td class="nr">${i+1}</td><td class="topic-c">${TOPICS[i]}</td><td class="task">${t[0]}</td><td class="sol" data-i="${i}"><span class="${(S.allRevealed||S.revealed.has(i))?"":"hid"}"><span>${t[1]}</span></span></td></tr>`).join("");
+  $("reveal").textContent = S.allRevealed ? "Lösungen ausblenden" : "Alle Lösungen einblenden";
+  tick(true);
+}
+function renderView(){
+  $("viewS").classList.toggle("hidden", S.view!=="S");
+  $("viewL").classList.toggle("hidden", S.view!=="L");
+  $("tabS").classList.toggle("on", S.view==="S");
+  $("tabL").classList.toggle("on", S.view==="L");
+  try{ history.replaceState(null,"", S.view==="L" ? "#lehrer" : location.pathname+location.search); }catch(e){}
+}
+
+/* ---------- Timer ---------- */
+const total = () => S.minutes*60*1000;
+const fmt = ms => { const s=Math.ceil(ms/1000); return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); };
+function getElapsed(){ return S.running ? S.elapsed + (performance.now()-S.startedAt) : S.elapsed; }
+
+let lastIdx = -2;
+function tick(force){
+  const T = total(), el = Math.min(getElapsed(), T), rem = T-el;
+  const started = el>0 || S.running;
+  const seg = T/10;
+  let idx = started ? Math.min(9, Math.floor(el/seg)) : -1;
+  if(S.finished) idx = 10;
+  const frac = idx>=0 && idx<10 ? (el - idx*seg)/seg : 0;
+
+  $("clock").textContent = fmt(rem);
+  $("clock").classList.toggle("ending", started && rem<=Math.min(30000,seg) && !S.finished);
+  $("hint").textContent = "Pro Thema: " + fmt(seg) + " min";
+
+  // Segmente
+  [...$("segs").children].forEach((s,i)=>{
+    s.classList.toggle("done", i<idx);
+    s.firstChild.style.width = i===idx ? (frac*100)+"%" : (i<idx?"100%":"0");
+  });
+  // Themen
+  document.querySelectorAll(".topic").forEach((el2,i)=>{
+    el2.classList.toggle("active", i===idx);
+    el2.classList.toggle("done", i<idx);
+    el2.querySelector(".bar").style.width = i===idx ? (frac*100)+"%" : "0";
+  });
+  // Lehrer
+  document.querySelectorAll("#tbody tr").forEach((tr,i)=>{
+    tr.classList.toggle("now", i===idx);
+    tr.classList.toggle("past", i<idx);
+  });
+  if(idx!==lastIdx || force){
+    if(idx>=0 && idx<10){
+      $("curLbl").textContent = `Aufgabe ${idx+1} von 10 · ${topicsFor(S.week)[idx]}`;
+      $("curQ").innerHTML = WEEKS[S.week][idx][0];
+      $("curT").textContent = "";
+    } else if(idx===10){
+      $("curLbl").textContent = "Übung beendet";
+      $("curQ").textContent = "Jetzt die Lösungen einblenden und vergleichen.";
+      $("curT").textContent = "";
+    } else {
+      $("curLbl").textContent = "Noch nicht gestartet";
+      $("curQ").textContent = "Starte den Timer – die aktuelle Aufgabe erscheint dann hier zum Vorlesen.";
+      $("curT").textContent = "";
+    }
+    if(idx>0 && idx<10 && idx!==lastIdx && lastIdx>=0 && !force) chime();
+    lastIdx = idx;
+  }
+  // Ende
+  if(S.running && el>=T){ finish(); }
+}
+
+function start(){
+  ensureAudio();
+  if(S.finished){ resetTimer(); }
+  if(S.running){ // Pause
+    S.elapsed = getElapsed(); S.running=false;
+  } else {
+    S.startedAt = performance.now(); S.running=true;
+  }
+  updateButtons();
+}
+function resetTimer(){
+  S.running=false; S.elapsed=0; S.finished=false; lastIdx=-2;
+  $("overlay").classList.remove("show");
+  updateButtons(); tick(true);
+}
+function finish(){
+  S.running=false; S.elapsed=total(); S.finished=true;
+  updateButtons(); tick(true);
+  gong();
+  document.body.classList.remove("flash"); void document.body.offsetWidth; document.body.classList.add("flash");
+  if(S.view==="S") $("overlay").classList.add("show");
+}
+function updateButtons(){
+  $("start").textContent = S.running ? "⏸ Pause" : (S.elapsed>0 && !S.finished ? "▶ Weiter" : "▶ Start");
+  $("minutes").disabled = S.running || (S.elapsed>0 && !S.finished);
+}
+function loop(){ if(S.running) tick(); requestAnimationFrame(loop); }
+
+/* ---------- Ton ---------- */
+let AC=null;
+function ensureAudio(){ try{ if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); } if(AC.state==="suspended") AC.resume(); }catch(e){} }
+function tone(freq, t0, dur, vol=0.35, type="sine"){
+  if(!AC) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0+dur+0.05);
+}
+function gong(){
+  if(!AC) return; const t=AC.currentTime+0.05;
+  [0,0.6,1.2].forEach((d,k)=>{ tone(880,t+d,1.1,0.4); tone(1320,t+d,0.9,0.15); });
+  tone(660,t+1.9,2.2,0.45); tone(990,t+1.9,1.8,0.2);
+}
+function chime(){ if(!AC || !$("chimeOn")?.checked) return; tone(1046,AC.currentTime+0.02,0.35,0.18); }
+
+/* ---------- Events ---------- */
+$("week").addEventListener("change", e=>{ S.week=+e.target.value; S.revealed.clear(); S.allRevealed=false; store.set("kr8-week",S.week); renderWeek(); });
+$("minutes").addEventListener("change", e=>{
+  let v=parseFloat(String(e.target.value).replace(",", ".")); if(!(v>0)) v=10; v=Math.min(90,Math.max(1,v));
+  e.target.value=v; S.minutes=v; store.set("kr8-min",v); resetTimer();
+});
+$("start").addEventListener("click", start);
+$("reset").addEventListener("click", resetTimer);
+$("closeOv").addEventListener("click", ()=>$("overlay").classList.remove("show"));
+$("tabS").addEventListener("click", ()=>{ S.view="S"; renderView(); });
+$("tabL").addEventListener("click", ()=>{ S.view="L"; renderView(); $("overlay").classList.remove("show"); });
+$("reveal").addEventListener("click", ()=>{ S.allRevealed=!S.allRevealed; S.revealed.clear(); renderWeek(); });
+$("tbody").addEventListener("click", e=>{
+  const td=e.target.closest("td.sol"); if(!td) return;
+  const i=+td.dataset.i; if(S.allRevealed) return;
+  S.revealed.has(i) ? S.revealed.delete(i) : S.revealed.add(i);
+  td.firstElementChild.classList.toggle("hid", !S.revealed.has(i));
+});
+$("fs").addEventListener("click", ()=>{
+  try{ if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen(); }catch(e){}
+});
+document.addEventListener("keydown", e=>{
+  if(e.code==="Space" && !["INPUT","SELECT","BUTTON"].includes(document.activeElement.tagName)){ e.preventDefault(); start(); }
+});
+
+/* Option: Ton bei Themenwechsel */
+(function(){
+  const l=document.createElement("label"); l.className="hint"; l.style.cssText="display:flex;align-items:center;gap:6px;cursor:pointer";
+  l.innerHTML='<input type="checkbox" id="chimeOn"> leiser Ton bei jedem Themenwechsel';
+  $("hint").after(l);
+})();
+
+$("minutes").value = S.minutes;
+renderWeek(); renderView(); updateButtons(); tick(true); loop();
+</script>
+</body>
+</html>
